@@ -113,16 +113,21 @@ class LQGTDataset(data.Dataset):
             img_LQ = util.channel_convert(C, self.opt['color'],
                                           [img_LQ])[0]  # TODO during val no definition
 
+        # get lr_large image
+        img_LQ_Large = cv2.resize(img_LQ, (GT_size, GT_size), cv2.INTER_CUBIC)
+
         # BGR to RGB, HWC to CHW, numpy to tensor
         if img_GT.shape[2] == 3:
             img_GT = img_GT[:, :, [2, 1, 0]]
             img_LQ = img_LQ[:, :, [2, 1, 0]]
+            img_LQ_Large = img_LQ_Large[:, :, [2, 1, 0]]
         img_GT = torch.from_numpy(np.ascontiguousarray(np.transpose(img_GT, (2, 0, 1)))).float()
         img_LQ = torch.from_numpy(np.ascontiguousarray(np.transpose(img_LQ, (2, 0, 1)))).float()
+        img_LQ_Large = torch.from_numpy(np.ascontiguousarray(np.transpose(img_LQ_Large, (2, 0, 1)))).float()
 
         if LQ_path is None:
             LQ_path = GT_path
-        return {'LQ': img_LQ, 'GT': img_GT, 'LQ_path': LQ_path, 'GT_path': GT_path}
+        return {'LQ': img_LQ, 'GT': img_GT, 'LQ_Large': img_LQ_Large, 'LQ_path': LQ_path, 'GT_path': GT_path}
 
     def __len__(self):
         return len(self.paths_GT)

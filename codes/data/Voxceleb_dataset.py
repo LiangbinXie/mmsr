@@ -110,6 +110,11 @@ class VOXCELEBDataset(data.Dataset):
         # get lr_large image
         img_LQ_Large = cv2.resize(img_LQ, (GT_size, GT_size), cv2.INTER_CUBIC)
 
+        # get the pts, heatmaps and masks
+        f_anno = osp.join(self.landmarks_folder_256, GT_path + '.txt')
+        # load the landmarks
+        pts, point_set = util.anno_parser(f_anno, 68)
+
         # if self.opt['phase'] == 'train':
         #     # if the image size is too small
         #     H, W, _ = img_GT.shape
@@ -123,8 +128,12 @@ class VOXCELEBDataset(data.Dataset):
         H, W, C = img_LQ.shape
 
         # augmentation - flip, rotate
-        img_LQ, img_GT = util.augment([img_LQ, img_GT], self.opt['use_flip'],
-                                          self.opt['use_rot'])
+        imgs = []
+        imgs.append(img_LQ)
+        imgs.append(img_GT)
+        rlt, pts = util.augment_imgs_landmarks(GT_size, imgs, pts, self.opt['use_flip'], self.opt['use_rot'])
+        img_LQ = rlt[0]
+        img_GT = rlt[-1]
 
         if self.opt['color']:  # change color space if necessary
             img_LQ = util.channel_convert(C, self.opt['color'],
@@ -134,13 +143,20 @@ class VOXCELEBDataset(data.Dataset):
         if img_GT.shape[2] == 3:
             img_GT = img_GT[:, :, [2, 1, 0]]
             img_LQ = img_LQ[:, :, [2, 1, 0]]
+            img_LQ_Large = img_LQ_Large[:, :, [2, 1, 0]]
         img_GT = torch.from_numpy(np.ascontiguousarray(np.transpose(img_GT, (2, 0, 1)))).float()
         img_LQ = torch.from_numpy(np.ascontiguousarray(np.transpose(img_LQ, (2, 0, 1)))).float()
         img_LQ_Large = torch.from_numpy(np.ascontiguousarray(np.transpose(img_LQ_Large, (2, 0, 1)))).float()
 
+        pts = util.apply_bound(pts, 256, 256)
+        # H*W*C
+        GT_heatmaps, GT_mask = util.generate_label_map(pts, 16, 16, self.sigma, 16.0, self.heatmap_type)
+        GT_heatmaps = torch.from_numpy(GT_heatmaps.transpose((2, 0, 1))).type(torch.FloatTensor)
+        GT_mask = torch.from_numpy(GT_mask.transpose((2,0,1))).type(torch.ByteTensor)
+
         if LQ_path is None:
             LQ_path = GT_path
-        return {'LQ': img_LQ, 'GT': img_GT, 'LQ_Large': img_LQ_Large,'LQ_path': LQ_path, 'GT_path': GT_path}
+        return {'LQ': img_LQ, 'GT': img_GT, 'LQ_Large': img_LQ_Large, 'GT_heatmaps': GT_heatmaps, 'GT_mask': GT_mask}
 
 
     def __len__(self):

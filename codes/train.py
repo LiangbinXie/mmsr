@@ -185,7 +185,7 @@ def main():
                         img_dir = os.path.join(opt['path']['val_images'], img_name)
                         util.mkdir(img_dir)
 
-                        model.feed_data(val_data)
+                        model.feed_data(val_data, need_Heatmaps=False)
                         model.test()
 
                         visuals = model.get_current_visuals()

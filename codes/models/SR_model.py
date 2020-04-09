@@ -7,7 +7,7 @@ from torch.nn.parallel import DataParallel, DistributedDataParallel
 import models.networks as networks
 import models.lr_scheduler as lr_scheduler
 from .base_model import BaseModel
-from models.loss import CharbonnierLoss
+from models.loss import CharbonnierLoss, L1_loss, CPM
 
 logger = logging.getLogger('base')
 
@@ -43,9 +43,18 @@ class SRModel(BaseModel):
                 self.cri_pix = nn.MSELoss().to(self.device)
             elif loss_type == 'cb':
                 self.cri_pix = CharbonnierLoss().to(self.device)
+            elif loss_type == 'L1_Loss':
+                self.cri_pix = L1_loss().to(self.device)
             else:
                 raise NotImplementedError('Loss type [{:s}] is not recognized.'.format(loss_type))
             self.l_pix_w = train_opt['pixel_weight']
+
+            # add cpm loss
+            if train_opt['landmark_criterion'] is not None:
+                heatmap_loss_type = train_opt['landmark_criterion']
+                if heatmap_loss_type == 'CPM':
+                    self.cri_heatmap = CPM().to(self.device)
+                self.l_heatmap_w = train_opt['landmark_weight']
 
             # optimizers
             wd_G = train_opt['weight_decay_G'] if train_opt['weight_decay_G'] else 0
@@ -57,7 +66,7 @@ class SRModel(BaseModel):
                     if self.rank <= 0:
                         logger.warning('Params [{:s}] will not optimize.'.format(k))
             self.optimizer_G = torch.optim.Adam(optim_params, lr=train_opt['lr_G'],
-                                                weight_decay=wd_G,
+                                                weight_decay=wd_G, eps=train_opt['epsilon'],
                                                 betas=(train_opt['beta1'], train_opt['beta2']))
             self.optimizers.append(self.optimizer_G)
 
@@ -81,18 +90,23 @@ class SRModel(BaseModel):
 
             self.log_dict = OrderedDict()
 
-    def feed_data(self, data, need_GT=True):
-        self.var_L = data['LQ_Large'].to(self.device)  # LQ
+    def feed_data(self, data, need_GT=True, need_Heatmaps=True):
+        self.var_L = data['LQ_Large'].to(self.device)  # LQ_Large
         if need_GT:
             self.real_H = data['GT'].to(self.device)  # GT
+        if need_Heatmaps:
+            self.real_heatmaps = data['GT_heatmaps'].to(self.device)
+            self.real_mask = data['GT_mask'].to(self.device)
 
     def optimize_parameters(self, step):
         self.optimizer_G.zero_grad()
         print('The shape of var_L is: ', self.var_L.shape)
         print('The name of netG is: ', self.netG.__class__.__name__)
-        self.fake_H, _ = self.netG(self.var_L)
-        print('The shape of fake_H is: ', self.fake_H.shape)
+        self.fake_H, self.batch_heatmaps = self.netG(self.var_L)
         l_pix = self.l_pix_w * self.cri_pix(self.fake_H, self.real_H)
+        if self.opt['train']['landmark_criterion'] is not None:
+            l_heatmap = self.l_heatmap_w * self.cri_heatmap(self.batch_heatmaps, self.real_heatmaps, self.real_mask)
+            l_pix += l_heatmap
         l_pix.backward()
         self.optimizer_G.step()
 
