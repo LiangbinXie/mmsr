@@ -16,7 +16,7 @@ datasets:
     mode: VoxCeleb1
     dataroot_GT: /data2/lbxie/Superface/sisr_train_128_wval.lmdb
     dataroot_LQ: /data2/lbxie/Superface/sisr_train_16_wval.lmdb
-    dataroot_landmark: /data2/lbxie/Superface/train_256_landmark
+    dataroot_landmark: /data2/lbxie/Superface/sisr_train_256_landmark
 
     use_shuffle: true
     n_workers: 6  # per GPU
@@ -28,6 +28,7 @@ datasets:
   val:
     name: VoxCeleb1_test
     mode: LQGT
+    GT_size: 128
     dataroot_GT: /data2/lbxie/Superface/sisr_val_128
     dataroot_LQ: /data2/lbxie/Superface/sisr_val_16
 
@@ -67,7 +68,7 @@ train:
   landmark_weight: 1.0
 
   manual_seed: 10
-  val_freq: !!float 2e2
+  val_freq: !!float 5e3
 
 #### logger
 logger:

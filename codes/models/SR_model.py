@@ -66,7 +66,7 @@ class SRModel(BaseModel):
                     if self.rank <= 0:
                         logger.warning('Params [{:s}] will not optimize.'.format(k))
             self.optimizer_G = torch.optim.Adam(optim_params, lr=train_opt['lr_G'],
-                                                weight_decay=wd_G, eps=train_opt['epsilon'],
+                                                weight_decay=wd_G, eps=float(train_opt['epsilon']),
                                                 betas=(train_opt['beta1'], train_opt['beta2']))
             self.optimizers.append(self.optimizer_G)
 
@@ -100,8 +100,6 @@ class SRModel(BaseModel):
 
     def optimize_parameters(self, step):
         self.optimizer_G.zero_grad()
-        print('The shape of var_L is: ', self.var_L.shape)
-        print('The name of netG is: ', self.netG.__class__.__name__)
         self.fake_H, self.batch_heatmaps = self.netG(self.var_L)
         l_pix = self.l_pix_w * self.cri_pix(self.fake_H, self.real_H)
         if self.opt['train']['landmark_criterion'] is not None:
@@ -116,7 +114,7 @@ class SRModel(BaseModel):
     def test(self):
         self.netG.eval()
         with torch.no_grad():
-            self.fake_H = self.netG(self.var_L)
+            self.fake_H, _ = self.netG(self.var_L)
         self.netG.train()
 
     def test_x8(self):

@@ -120,8 +120,6 @@ class JASR(nn.Module):
             common.Upsampler(conv, scale, n_feats, act=False),
             conv(n_feats, n_colors, kernel_size)
         ]
-        
-        print('The scale is: ', scale)
 
         # ---- CPM ---- #
         m_CPM_feature = []
@@ -158,7 +156,6 @@ class JASR(nn.Module):
         self.stages = nn.ModuleList(stages)
 
     def forward(self, lr):
-        print('The shape of lr is: ', lr.shape)
         assert lr.dim() == 4, 'This model accepts 4 dimension input tensor: {}'.format(lr.size())
         batch_size, feature_dim = lr.size(0), lr.size(1)
         batch_cpms = []
@@ -183,14 +180,12 @@ class JASR(nn.Module):
         feat = self.features(c)
         feat = feat + a
 
-        print('****The shape of feat is: ', feat.shape)
         # SR upsample
         sr_feature = self.sr_feature(feat)
         sr_feature = sr_feature + self.long_connection(x) 
 
         sr = self.sr_tail(sr_feature)
         sr = self.add_mean(sr)
-        print('****The shape of sr is: ', sr.shape)
     
         # CPM 
         xfeature = self.CPM_feature(feat)
@@ -200,7 +195,6 @@ class JASR(nn.Module):
             if i == 0: cpm = self.stages[i]( xfeature )
             else:      cpm = self.stages[i]( torch.cat([xfeature, batch_cpms[i-1]], 1) )
             batch_cpms.append( cpm )
-        print('The shape of sr is: ', sr.shape)
         return sr,  batch_cpms
 
 
