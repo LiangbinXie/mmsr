@@ -72,3 +72,38 @@ class GradientPenaltyLoss(nn.Module):
 
         loss = ((grad_interp_norm - 1)**2).mean()
         return loss
+
+
+class L1_loss(nn.Module):
+    def __init__(self):
+        super(L1_loss, self).__init__()
+        self.criterion = nn.L1Loss()
+
+    def forward(self, outputs, targets):
+        if outputs.size(1) == 3:
+            loss = self.criterion( outputs , targets )
+        else:
+            loss = 0
+            for i in range(len(outputs)):
+                loss += self.criterion( outputs[i] , targets )
+        return loss
+
+
+class CPM(nn.Module):
+    def __init__(self):
+        super(CPM, self).__init__()
+        self.criterion = nn.MSELoss(False)
+
+    def forward(self, outputs, targets, masks=[]):
+        total_loss = 0
+
+        for output in outputs:
+            output = torch.masked_select(output , masks)
+            target = torch.masked_select(targets, masks)
+
+            stage_loss = self.criterion(output, target)
+            total_loss = total_loss + stage_loss
+
+        total_loss = total_loss / targets.size(0) / 2
+
+        return total_loss

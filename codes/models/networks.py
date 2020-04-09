@@ -3,6 +3,7 @@ import models.archs.SRResNet_arch as SRResNet_arch
 import models.archs.discriminator_vgg_arch as SRGAN_arch
 import models.archs.RRDBNet_arch as RRDBNet_arch
 import models.archs.EDVR_arch as EDVR_arch
+import models.archs.JASRNet_arch as JASRNet_arch
 
 
 # Generator
@@ -24,6 +25,10 @@ def define_G(opt):
                               back_RBs=opt_net['back_RBs'], center=opt_net['center'],
                               predeblur=opt_net['predeblur'], HR_in=opt_net['HR_in'],
                               w_TSA=opt_net['w_TSA'])
+    elif which_model == 'JASRNet':
+        netG = JASRNet_arch.JASR(n_Parts=opt_net['n_Parts'], n_resblocks=opt_net['n_resblocks'],
+                                 n_feats=opt_net['n_feats'], scale=opt_net['scale'],
+                                 rgb_range=opt_net['rgb_range'], n_colors=opt_net['n_colors'])
     else:
         raise NotImplementedError('Generator model [{:s}] not recognized'.format(which_model))
 
