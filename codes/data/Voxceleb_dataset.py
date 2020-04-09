@@ -108,7 +108,7 @@ class VOXCELEBDataset(data.Dataset):
                 img_LQ = np.expand_dims(img_LQ, axis=2)
 
         # get lr_large image
-        img_LQ_Large = cv2.resize(img_LQ, GT_size, cv2.INTER_CUBIC)
+        img_LQ_Large = cv2.resize(img_LQ, (GT_size, GT_size), cv2.INTER_CUBIC)
 
         # if self.opt['phase'] == 'train':
         #     # if the image size is too small

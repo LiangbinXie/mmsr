@@ -20,6 +20,7 @@ class LQGTDataset(data.Dataset):
         self.paths_LQ, self.paths_GT = None, None
         self.sizes_LQ, self.sizes_GT = None, None
         self.LQ_env, self.GT_env = None, None  # environments for lmdb
+        print(self.data_type, opt['dataroot_GT'])
 
         self.paths_GT, self.sizes_GT = util.get_image_paths(self.data_type, opt['dataroot_GT'])
         self.paths_LQ, self.sizes_LQ = util.get_image_paths(self.data_type, opt['dataroot_LQ'])

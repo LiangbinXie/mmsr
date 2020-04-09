@@ -15,7 +15,7 @@ datasets:
     name: VoxCeleb1
     mode: VoxCeleb1
     dataroot_GT: /data2/lbxie/Superface/sisr_train_128_wval.lmdb
-    dataroot_LQ: /data2/lbxie/Superface/sisr_train_32_wval.lmdb
+    dataroot_LQ: /data2/lbxie/Superface/sisr_train_16_wval.lmdb
 
     use_shuffle: true
     n_workers: 6  # per GPU
@@ -25,10 +25,10 @@ datasets:
     use_rot: true
     color: RGB
   val:
-    name: val_set5
+    name: VoxCeleb1_test
     mode: LQGT
     dataroot_GT: /data2/lbxie/Superface/sisr_val_128
-    dataroot_LQ: /data2/lbxie/Superface/sisr_val_32
+    dataroot_LQ: /data2/lbxie/Superface/sisr_val_16
 
 #### network structures
 network_G:

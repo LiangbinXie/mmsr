@@ -173,7 +173,8 @@ def get_image_paths(data_type, dataroot):
         if data_type == 'lmdb':
             paths, sizes = _get_paths_from_lmdb(dataroot)
         elif data_type == 'img':
-            paths = sorted(_get_paths_from_images(dataroot))
+            paths, _ = _get_paths_from_images(dataroot)
+            paths = sorted(paths)
         else:
             raise NotImplementedError('data_type [{:s}] is not recognized.'.format(data_type))
     return paths, sizes

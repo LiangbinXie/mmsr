@@ -82,13 +82,16 @@ class SRModel(BaseModel):
             self.log_dict = OrderedDict()
 
     def feed_data(self, data, need_GT=True):
-        self.var_L = data['LQ'].to(self.device)  # LQ
+        self.var_L = data['LQ_Large'].to(self.device)  # LQ
         if need_GT:
             self.real_H = data['GT'].to(self.device)  # GT
 
     def optimize_parameters(self, step):
         self.optimizer_G.zero_grad()
-        self.fake_H = self.netG(self.var_L)
+        print('The shape of var_L is: ', self.var_L.shape)
+        print('The name of netG is: ', self.netG.__class__.__name__)
+        self.fake_H, _ = self.netG(self.var_L)
+        print('The shape of fake_H is: ', self.fake_H.shape)
         l_pix = self.l_pix_w * self.cri_pix(self.fake_H, self.real_H)
         l_pix.backward()
         self.optimizer_G.step()
