@@ -26,6 +26,11 @@ class MSRResNet(nn.Module):
             self.upconv1 = nn.Conv2d(nf, nf * 4, 3, 1, 1, bias=True)
             self.upconv2 = nn.Conv2d(nf, nf * 4, 3, 1, 1, bias=True)
             self.pixel_shuffle = nn.PixelShuffle(2)
+        elif self.upscale == 8:
+            self.upconv1 = nn.Conv2d(nf, nf * 4, 3, 1, 1, bias=True)
+            self.upconv2 = nn.Conv2d(nf, nf * 4, 3, 1, 1, bias=True)
+            self.upconv3 = nn.Conv2d(nf, nf * 4, 3, 1, 1, bias=True)
+            self.pixel_shuffle = nn.PixelShuffle(2)
 
         self.HRconv = nn.Conv2d(nf, nf, 3, 1, 1, bias=True)
         self.conv_last = nn.Conv2d(nf, out_nc, 3, 1, 1, bias=True)
@@ -43,7 +48,11 @@ class MSRResNet(nn.Module):
         fea = self.lrelu(self.conv_first(x))
         out = self.recon_trunk(fea)
 
-        if self.upscale == 4:
+        if self.upscale == 8:
+            out = self.lrelu(self.pixel_shuffle(self.upconv1(out)))
+            out = self.lrelu(self.pixel_shuffle(self.upconv2(out)))
+            out = self.lrelu(self.pixel_shuffle(self.upconv3(out)))
+        elif self.upscale == 4:
             out = self.lrelu(self.pixel_shuffle(self.upconv1(out)))
             out = self.lrelu(self.pixel_shuffle(self.upconv2(out)))
         elif self.upscale == 3 or self.upscale == 2:
